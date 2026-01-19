@@ -1,8 +1,38 @@
 @import "tailwindcss";
 
+/**
+ * Control de Gastos - Estética Japonesa Minimalista (Modo Oscuro)
+ * Filosofía: Ma (間), Wabi-sabi, Kanso - con profundidad visual
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base oscura - negro con calidez */
+  --background: #0C0C0E;
+  --background-elevated: #141416;
+  --background-card: #1A1A1E;
+  --foreground: #E8E8E6;
+
+  /* Grises cálidos oscuros */
+  --gray-100: #E8E8E6;
+  --gray-200: #B8B8B4;
+  --gray-300: #8A8A82;
+  --gray-400: #5C5C56;
+  --gray-500: #3D3D38;
+  --gray-600: #2A2A2C;
+  --gray-700: #1E1E20;
+
+  /* Acento: Rojo bermellón suave */
+  --accent: #D4513D;
+  --accent-glow: rgba(212, 81, 61, 0.15);
+  --accent-soft: rgba(212, 81, 61, 0.08);
+
+  /* Bordes y sombras */
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px var(--accent-glow);
 }
 
 @theme inline {
@@ -12,15 +42,231 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Tipografía base */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  line-height: 1.8;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fondo con gradiente sutil */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%, rgba(212, 81, 61, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(212, 81, 61, 0.04) 0%, transparent 50%);
+}
+
+/* Textura muy sutil */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* Tipografía - Encabezados */
+h1,
+h2,
+h3,
+h4 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+/* Selección de texto */
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
+}
+
+/* Scrollbar minimalista */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gray-500);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+/* Focus visible */
+*:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 400ms ease-out forwards;
+}
+
+/* Card con sombra y glassmorphism */
+.card {
+  background: linear-gradient(135deg, var(--background-card) 0%, rgba(26, 26, 30, 0.8) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(8px);
+  transition: all 300ms ease-in-out;
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Card destacada con glow */
+.card-accent {
+  background: linear-gradient(135deg, rgba(212, 81, 61, 0.08) 0%, rgba(26, 26, 30, 0.9) 100%);
+  border: 1px solid rgba(212, 81, 61, 0.2);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+/* Inputs estilo oscuro */
+input[type="text"],
+input[type="number"] {
+  background: var(--background-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--foreground);
+  transition: all 300ms ease-in-out;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+input[type="text"]::placeholder,
+input[type="number"]::placeholder {
+  color: var(--gray-400);
+}
+
+/* Ocultar flechas de input number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Divisor */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--border-hover) 50%, transparent 100%);
+}
+
+/* Contenedor principal */
+.container-reading {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Botón primario con gradiente */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, #B8442F 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm), 0 0 16px var(--accent-glow);
+  transition: all 300ms ease-in-out;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), 0 0 24px var(--accent-glow);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Botón secundario */
+.btn-secondary {
+  background: var(--background-elevated);
+  color: var(--gray-200);
+  border: 1px solid var(--border);
+  padding: 0.875rem 1.5rem;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  border-radius: 8px;
+  transition: all 300ms ease-in-out;
+}
+
+.btn-secondary:hover {
+  background: var(--background-card);
+  border-color: var(--border-hover);
+}
+
+/* Stat card con gradiente sutil */
+.stat-card {
+  background: linear-gradient(180deg, var(--background-card) 0%, var(--background-elevated) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 300ms ease-in-out;
+}
+
+.stat-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+/* Glow del progress ring */
+.progress-glow {
+  filter: drop-shadow(0 0 8px var(--accent-glow));
 }
