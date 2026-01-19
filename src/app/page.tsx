@@ -2,7 +2,7 @@
 
 /**
  * Página principal - Control de Gastos
- * Layout con cards elevadas y espaciado equilibrado
+ * Layout con cards elevadas, límites y alertas
  */
 
 import { useExpenses } from '@/context/ExpenseContext';
@@ -11,6 +11,7 @@ import Dashboard from '@/components/Dashboard';
 import ExpenseForm from '@/components/ExpenseForm';
 import ExpenseList from '@/components/ExpenseList';
 import CategoryBreakdown from '@/components/CategoryBreakdown';
+import LimitWarningPopup from '@/components/LimitWarningPopup';
 
 export default function Home() {
   const { isLoading, currentWeek } = useExpenses();
@@ -36,49 +37,54 @@ export default function Home() {
   }
 
   return (
-    <main
-      className="min-h-screen py-12 px-6"
-      style={{ maxWidth: '800px', margin: '0 auto' }}
-    >
-      {/* Header: Selector de semana */}
-      <WeekSelector />
+    <>
+      {/* Popup de advertencia de límites (aparece al cargar si hay alertas) */}
+      <LimitWarningPopup />
 
-      {/* Contenido principal */}
-      {currentWeek && (
-        <>
-          {/* Dashboard */}
-          <Dashboard />
-
-          {/* Grid: Formulario y Categorías */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            {/* Formulario */}
-            <div className="lg:mt-0 mt-0">
-              <ExpenseForm />
-            </div>
-
-            {/* Categorías */}
-            <div className="lg:mt-0 mt-0">
-              <CategoryBreakdown />
-            </div>
-          </div>
-
-          {/* Lista de gastos */}
-          <ExpenseList />
-        </>
-      )}
-
-      {/* Footer */}
-      <footer
-        className="mt-16 pt-8 text-center"
-        style={{ borderTop: '1px solid var(--border)' }}
+      <main
+        className="min-h-screen py-12 px-6"
+        style={{ maxWidth: '800px', margin: '0 auto' }}
       >
-        <p
-          className="text-sm"
-          style={{ color: 'var(--gray-500)' }}
+        {/* Header: Selector de semana */}
+        <WeekSelector />
+
+        {/* Contenido principal */}
+        {currentWeek && (
+          <>
+            {/* Dashboard */}
+            <Dashboard />
+
+            {/* Grid: Formulario y Categorías */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              {/* Formulario */}
+              <div className="lg:mt-0 mt-0">
+                <ExpenseForm />
+              </div>
+
+              {/* Categorías con límites */}
+              <div className="lg:mt-0 mt-0">
+                <CategoryBreakdown />
+              </div>
+            </div>
+
+            {/* Lista de gastos */}
+            <ExpenseList />
+          </>
+        )}
+
+        {/* Footer */}
+        <footer
+          className="mt-16 pt-8 text-center"
+          style={{ borderTop: '1px solid var(--border)' }}
         >
-          Los datos se guardan localmente en tu navegador
-        </p>
-      </footer>
-    </main>
+          <p
+            className="text-sm"
+            style={{ color: 'var(--gray-500)' }}
+          >
+            Los datos se guardan localmente en tu navegador
+          </p>
+        </footer>
+      </main>
+    </>
   );
 }

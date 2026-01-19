@@ -2,7 +2,7 @@
 
 /**
  * Context Provider para el estado global de la app
- * Maneja semanas, gastos y persistencia en LocalStorage
+ * Maneja semanas, gastos, límites y persistencia en LocalStorage
  */
 
 import React, {
@@ -14,7 +14,7 @@ import React, {
     useMemo,
     ReactNode,
 } from 'react';
-import { Week, Expense, Category, CategoryTotals } from '@/types';
+import { Week, Expense, Category, CategoryTotals, CategoryLimits, LimitWarning } from '@/types';
 import { saveToStorage, loadFromStorage, generateId } from '@/lib/storage';
 import {
     calculateTotalSpent,
@@ -23,6 +23,7 @@ import {
     getCategoryTotals,
     getWeekStartDate,
     getWeekEndDate,
+    getAllCategories,
 } from '@/lib/utils';
 
 // Tipo del contexto con todas las funciones y estado
@@ -38,24 +39,26 @@ interface ExpenseContextType {
     percentageUsed: number;
     categoryTotals: CategoryTotals;
 
+    // Límites
+    categoryLimits: CategoryLimits;
+    limitWarnings: LimitWarning[];
+
     // Acciones
-    createWeek: (initialBudget: number) => void;
+    createWeek: (initialBudget: number, limits?: CategoryLimits) => void;
     addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
     deleteExpense: (expenseId: string) => void;
     selectWeek: (weekId: string) => void;
     updateWeekBudget: (weekId: string, newBudget: number) => void;
+    updateCategoryLimits: (limits: CategoryLimits) => void;
 }
 
-// Contexto con valor inicial undefined para detectar uso fuera del provider
 const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined);
 
-// Props del provider
 interface ExpenseProviderProps {
     children: ReactNode;
 }
 
 export function ExpenseProvider({ children }: ExpenseProviderProps) {
-    // Estado principal
     const [weeks, setWeeks] = useState<Week[]>([]);
     const [currentWeekId, setCurrentWeekId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -82,7 +85,7 @@ export function ExpenseProvider({ children }: ExpenseProviderProps) {
         return weeks.find((w) => w.id === currentWeekId) || null;
     }, [weeks, currentWeekId]);
 
-    // Valores calculados basados en la semana actual
+    // Valores calculados
     const totalSpent = useMemo(() => {
         return currentWeek ? calculateTotalSpent(currentWeek.expenses) : 0;
     }, [currentWeek]);
@@ -99,8 +102,42 @@ export function ExpenseProvider({ children }: ExpenseProviderProps) {
         return currentWeek ? getCategoryTotals(currentWeek.expenses) : getCategoryTotals([]);
     }, [currentWeek]);
 
-    // Crear nueva semana
-    const createWeek = useCallback((initialBudget: number) => {
+    // Límites de la semana actual
+    const categoryLimits = useMemo(() => {
+        return currentWeek?.categoryLimits || {};
+    }, [currentWeek]);
+
+    // Calcular advertencias de límites excedidos o cercanos (>80%)
+    const limitWarnings = useMemo((): LimitWarning[] => {
+        if (!currentWeek?.categoryLimits) return [];
+
+        const warnings: LimitWarning[] = [];
+        const categories = getAllCategories();
+
+        categories.forEach((cat) => {
+            const limit = currentWeek.categoryLimits?.[cat];
+            if (limit && limit > 0) {
+                const spent = categoryTotals[cat];
+                const percentage = (spent / limit) * 100;
+
+                // Advertir si está al 80% o más del límite
+                if (percentage >= 80) {
+                    warnings.push({
+                        category: cat,
+                        limit,
+                        spent,
+                        percentage,
+                    });
+                }
+            }
+        });
+
+        // Ordenar por porcentaje (más excedidos primero)
+        return warnings.sort((a, b) => b.percentage - a.percentage);
+    }, [currentWeek, categoryTotals]);
+
+    // Crear nueva semana con límites opcionales
+    const createWeek = useCallback((initialBudget: number, limits?: CategoryLimits) => {
         const startDate = getWeekStartDate();
         const endDate = getWeekEndDate(startDate);
 
@@ -110,13 +147,14 @@ export function ExpenseProvider({ children }: ExpenseProviderProps) {
             endDate,
             initialBudget,
             expenses: [],
+            categoryLimits: limits,
         };
 
         setWeeks((prev) => [newWeek, ...prev]);
         setCurrentWeekId(newWeek.id);
     }, []);
 
-    // Agregar gasto a la semana actual
+    // Agregar gasto
     const addExpense = useCallback(
         (expenseData: Omit<Expense, 'id' | 'createdAt'>) => {
             if (!currentWeekId) return;
@@ -157,12 +195,12 @@ export function ExpenseProvider({ children }: ExpenseProviderProps) {
         [currentWeekId]
     );
 
-    // Seleccionar una semana diferente
+    // Seleccionar semana
     const selectWeek = useCallback((weekId: string) => {
         setCurrentWeekId(weekId);
     }, []);
 
-    // Actualizar presupuesto de una semana
+    // Actualizar presupuesto
     const updateWeekBudget = useCallback((weekId: string, newBudget: number) => {
         setWeeks((prev) =>
             prev.map((week) =>
@@ -171,7 +209,22 @@ export function ExpenseProvider({ children }: ExpenseProviderProps) {
         );
     }, []);
 
-    // Valor del contexto memoizado
+    // Actualizar límites de categorías de la semana actual
+    const updateCategoryLimits = useCallback(
+        (limits: CategoryLimits) => {
+            if (!currentWeekId) return;
+
+            setWeeks((prev) =>
+                prev.map((week) =>
+                    week.id === currentWeekId
+                        ? { ...week, categoryLimits: limits }
+                        : week
+                )
+            );
+        },
+        [currentWeekId]
+    );
+
     const value = useMemo(
         () => ({
             weeks,
@@ -181,11 +234,14 @@ export function ExpenseProvider({ children }: ExpenseProviderProps) {
             remaining,
             percentageUsed,
             categoryTotals,
+            categoryLimits,
+            limitWarnings,
             createWeek,
             addExpense,
             deleteExpense,
             selectWeek,
             updateWeekBudget,
+            updateCategoryLimits,
         }),
         [
             weeks,
@@ -195,11 +251,14 @@ export function ExpenseProvider({ children }: ExpenseProviderProps) {
             remaining,
             percentageUsed,
             categoryTotals,
+            categoryLimits,
+            limitWarnings,
             createWeek,
             addExpense,
             deleteExpense,
             selectWeek,
             updateWeekBudget,
+            updateCategoryLimits,
         ]
     );
 
@@ -208,7 +267,6 @@ export function ExpenseProvider({ children }: ExpenseProviderProps) {
     );
 }
 
-// Hook personalizado para usar el contexto
 export function useExpenses() {
     const context = useContext(ExpenseContext);
     if (context === undefined) {
